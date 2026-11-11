@@ -1,0 +1,71 @@
+--- a/src/audio/switch/SDL_switchaudio.c
++++ b/src/audio/switch/SDL_switchaudio.c
+@@ -87 +86,0 @@
+-    device->hidden->next = 0;
+@@ -119,0 +119,2 @@
++// QuarantineNX modification: track released slots, and restore a silent lead
++// whenever scheduling delays drain the queue. Never modify an owned buffer.
+@@ -122,2 +123,15 @@
+-    AudioOutBuffer *b = &device->hidden->buffers[device->hidden->next];
+-
++    struct SDL_PrivateAudioData *h = device->hidden;
++    int queued = (int)h->queued[0] + (int)h->queued[1];
++    if (!queued) {
++        SDL_memset(h->buffers[0].buffer, 0, device->buffer_size);
++        h->buffers[0].data_size = device->buffer_size;
++        if (R_FAILED(audoutAppendAudioOutBuffer(&h->buffers[0]))) {
++            return SDL_SetError("audoutAppendAudioOutBuffer() priming failed");
++        }
++        h->queued[0] = true;
++    }
++    int slot = !h->queued[0] ? 0 : !h->queued[1] ? 1 : -1;
++    if (slot < 0) {
++        return SDL_SetError("Switch audio has no released buffer");
++    }
++    AudioOutBuffer *b = &h->buffers[slot];
+@@ -126,2 +139,0 @@
+-    device->hidden->next = (device->hidden->next + 1) % NUM_AUDIO_BUFFERS;
+-
+@@ -130,0 +143 @@
++    h->queued[slot] = true;
+@@ -133,0 +147,16 @@
++static bool SWITCHAUDIO_MarkReleased(SDL_AudioDevice *device, AudioOutBuffer *released, u32 count)
++{
++    // libnx requests space for a single returned buffer pointer. Refuse an
++    // unexpected result rather than guessing which storage can be reused.
++    if (count != 1 || !released) {
++        return SDL_SetError("Unexpected Switch audio release count");
++    }
++    for (int i = 0; i < NUM_AUDIO_BUFFERS; i++) {
++        if (released == &device->hidden->buffers[i] && device->hidden->queued[i]) {
++            device->hidden->queued[i] = false;
++            return true;
++        }
++    }
++    return SDL_SetError("Unknown or duplicate Switch audio buffer release");
++}
++
+@@ -137,3 +166,2 @@
+-    u32 released_count = 0;
+-    (void)device;
+-    if (R_FAILED(audoutWaitPlayFinish(&released, &released_count, UINT64_MAX))) {
++    u32 count = 0;
++    if (R_FAILED(audoutWaitPlayFinish(&released, &count, UINT64_MAX))) {
+@@ -142 +170,11 @@
+-    return true;
++    if (!SWITCHAUDIO_MarkReleased(device, released, count)) return false;
++    // A delayed thread may find both buffers already released. Drain the
++    // additional notification so the next submit can safely re-prime.
++    for (;;) {
++        released = NULL; count = 0;
++        if (R_FAILED(audoutGetReleasedAudioOutBuffer(&released, &count))) {
++            return SDL_SetError("audoutGetReleasedAudioOutBuffer() failed");
++        }
++        if (!count) return true;
++        if (!SWITCHAUDIO_MarkReleased(device, released, count)) return false;
++    }
+--- a/src/audio/switch/SDL_switchaudio.h
++++ b/src/audio/switch/SDL_switchaudio.h
+@@ -35 +35 @@
+-    int next;                                  // next pool slot to submit
++    bool queued[NUM_AUDIO_BUFFERS];             // QuarantineNX: AUDOUT owns these slots

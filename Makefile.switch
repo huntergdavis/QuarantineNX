@@ -1,0 +1,52 @@
+# Experimental native Switch build; see docs/switch-baseline.md.
+# SDL3_SWITCH is the root of the patched SDL source/build described there.
+ifneq ($(strip $(MAKECMDGOALS)),clean)
+ifndef DEVKITPRO
+$(error Set DEVKITPRO to your devkitPro installation)
+endif
+ifndef SDL3_SWITCH
+$(error Set SDL3_SWITCH to the patched SDL3 checkout)
+endif
+ifeq ($(wildcard gen/image_info.h),)
+$(error Generate gen/ from your own matching SKIPIT.EXE first; see README.md)
+endif
+ifeq ($(wildcard gen/table.c),)
+$(error gen/table.c is missing; regenerate the complete guest code)
+endif
+endif
+
+CC := $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-gcc
+ELF2NRO := $(DEVKITPRO)/tools/bin/elf2nro
+NACPTOOL := $(DEVKITPRO)/tools/bin/nacptool
+BUILD := build-switch
+VERSION := $(shell cat VERSION)
+ARCH := -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
+CFLAGS := -O1 -g $(ARCH) -std=c11 -D_DEFAULT_SOURCE -D_GNU_SOURCE -D__SWITCH__ -DUSE_SDL \
+          -DQUAR_VERSION='"$(VERSION)"' -fno-strict-aliasing -fwrapv \
+          -I$(SDL3_SWITCH)/include -I$(DEVKITPRO)/libnx/include
+SRC := $(wildcard gen/*.c) $(wildcard runtime/*.c)
+OBJ := $(patsubst %.c,$(BUILD)/%.o,$(SRC))
+SDL_LIBRARY := $(SDL3_SWITCH)/build-switch/libSDL3.a
+
+.PHONY: all clean
+all: $(BUILD)/QuarantineNX.nro
+
+$(BUILD)/%.o: %.c $(wildcard gen/*.h) runtime/rt.h runtime/sys.h runtime/disc.h runtime/compat.h
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD)/QuarantineNX.elf: $(OBJ) $(SDL_LIBRARY)
+	$(CC) -specs=$(DEVKITPRO)/libnx/switch.specs $(ARCH) $(OBJ) \
+	  -L$(SDL3_SWITCH)/build-switch -L$(DEVKITPRO)/portlibs/switch/lib -L$(DEVKITPRO)/libnx/lib \
+	  -Wl,--start-group -lSDL3 -lEGL -lGLESv2 -lglapi -ldrm_nouveau -Wl,--end-group \
+	  -lstdc++ -lnx -lm -o $@
+
+$(BUILD)/QuarantineNX.nacp: VERSION
+	@mkdir -p $(dir $@)
+	$(NACPTOOL) --create "QuarantineNX" "QuarantineNX contributors" "$(VERSION)" $@
+
+$(BUILD)/QuarantineNX.nro: $(BUILD)/QuarantineNX.elf $(BUILD)/QuarantineNX.nacp assets/icon.jpg
+	$(ELF2NRO) $< $@ --nacp=$(BUILD)/QuarantineNX.nacp --icon=assets/icon.jpg
+
+clean:
+	rm -rf $(BUILD)
