@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-source = Path("runtime/rt_fmv.c").read_text()
+source = (Path(__file__).resolve().parent.parent / "overlay/rt_fmv.c").read_text()
 start = source.index("static void send_video(")
 end = source.index("// Return 2 on system quit", start)
 prefix = r'''
