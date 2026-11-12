@@ -1,0 +1,35 @@
+name: Recipe checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepare-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          mkdir -p "$RUNNER_TEMP/bin"
+          # Ubuntu supplies ImageMagick 6's convert, not the magick 7 entry point.
+          # This checks recipe orchestration; release builds still require IM 7.
+          ln -s "$(command -v convert)" "$RUNNER_TEMP/bin/magick"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Check and prepare pinned source
+        run: |
+          bash -n prepare.sh
+          ./prepare.sh
+          test -s work/upstream/assets/icon.jpg
+          cmp overlay/rt_fmv.c work/upstream/runtime/rt_fmv.c
+          cmp Makefile.switch work/upstream/Makefile.switch
+      - name: Check refusal and host mocks
+        run: |
+          python3 tests/test_prepare_guards.py
+          python3 tests/test_fmv_send.py
+          python3 tools/test_switch_audio_queue.py "$PWD/work/SDL"
+          git diff --exit-code
