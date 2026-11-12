@@ -14,9 +14,8 @@ controls and that the audio candidate sounded good. The owner reported that the
 live-action intro played correctly in a local Switch test. A later startup
 candidate moves the AVI after the title and before the
 game's still-image montage, at the owner's request. This differs from the
-original video-enabled DOS batch, which plays it before the game. The changed
-placement and audio pause behavior have not yet been device-tested. This is not
-a verified release or a guarantee of compatibility.
+original video-enabled DOS batch, which plays it before the game. The owner reported that this startup test fixed the reported sequencing issue
+on Switch. This is not a guarantee of compatibility.
 
 ## Prepare
 

@@ -21,7 +21,7 @@ NACPTOOL := $(DEVKITPRO)/tools/bin/nacptool
 ENABLE_FMV ?= 1
 ifeq ($(ENABLE_FMV),1)
 BUILD := build-switch-fmv
-APP_NAME := QuarantineNX startup test
+APP_NAME := QuarantineNX
 else
 BUILD := build-switch
 APP_NAME := QuarantineNX
