@@ -14,7 +14,8 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                     'ac3a2cf01d47095b39449c91c5f4101c448253addb223ad2d60ef0100bb2b41e',
                     [(934,
                       0,
-                      '// Progress may return nonzero to cancel; an incomplete install has no marker.\n'),
+                      '// Progress may return nonzero to cancel; an incomplete install has no '
+                      'marker.\n'),
                      (969, 2, ''),
                      (972, 1, 'nt')]),
  'runtime/rt_config.c': ('3a4c084e4c90447c387ee9a1e9542c2272197a26b85eb3f7020406e5bda61c63',
@@ -43,14 +44,17 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                          '#include <errno.h>\n'
                          '\n'
                          '#ifdef __SWITCH__\n'
-                         '// libnx newlib has no pread. These descriptors are used only for positioned\n'
-                         '// reads here; serialize seek/read pairs so concurrent disc reads cannot race.\n'
+                         '// libnx newlib has no pread. These descriptors are used only for '
+                         'positioned\n'
+                         '// reads here; serialize seek/read pairs so concurrent disc reads cannot '
+                         'race.\n'
                          '#include <pthread.h>\n'
                          'static pthread_mutex_t disc_read_mutex = PTHREAD_MUTEX_INITIALIZER;\n'
-                         'static ssize_t disc_pread(int fd, void *buf, size_t size, off_t offset) {\n'
+                         'static ssize_t disc_pread(int fd, void *buf, size_t size, off_t offset) '
+                         '{\n'
                          '    pthread_mutex_lock(&disc_read_mutex);\n'
-                         '    ssize_t result = lseek(fd, offset, SEEK_SET) == (off_t)-1 ? -1 : read(fd, buf, '
-                         'size);\n'
+                         '    ssize_t result = lseek(fd, offset, SEEK_SET) == (off_t)-1 ? -1 : '
+                         'read(fd, buf, size);\n'
                          '    pthread_mutex_unlock(&disc_read_mutex);\n'
                          '    return result;\n'
                          '}\n'
@@ -69,22 +73,26 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                          '}\n'),
                         (15980,
                          0,
-                         '        if ((done % (64 * 2048) == 0) && cancelled(in)) { fclose(f); return -1; '
-                         '}\n'),
+                         '        if ((done % (64 * 2048) == 0) && cancelled(in)) { fclose(f); '
+                         'return -1; }\n'),
                         (16107, 3, 's'),
                         (16111, 0, 'ze_'),
                         (16112, 6, ''),
                         (16119, 2, 'n ='),
                         (16161, 0, ';\n        if (fwrite(sec, 1, n'),
                         (16165, 0, ' != n) { fclose(f)'),
-                        (16166, 0, ' fail(in->err, in->en, "Write failed for %s", p); return -1; }'),
+                        (16166,
+                         0,
+                         ' fail(in->err, in->en, "Write failed for %s", p); return -1; }'),
                         (16280, 64, ''),
                         (16355, 0, 'cancelled(in) ? -1 : '),
                         (16396, 2, ''),
                         (16399, 1, 'nt'),
                         (16667, 0, '\n'),
                         (16668, 0, '   if ('),
-                        (16677, 0, ' && errno != ENOENT) return fail(err, en, "Can\'t remove %s", m)'),
+                        (16677,
+                         0,
+                         ' && errno != ENOENT) return fail(err, en, "Can\'t remove %s", m)'),
                         (16742, 0, 'if ('),
                         (16765, 0, ') return fail(err, en, "Read error in the disc image", 0)'),
                         (16767, 0, '    if (cancelled(&in)) return -1;\n'),
@@ -93,8 +101,8 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                         (16959, 0, 'int closed = '),
                         (16970,
                          0,
-                         '    if (written < 0 || closed) { unlink(m); return fail(err, en, "Can\'t write '
-                         '%s", m); }\n')]),
+                         '    if (written < 0 || closed) { unlink(m); return fail(err, en, "Can\'t '
+                         'write %s", m); }\n')]),
  'runtime/rt_launcher.c': ('6dd43812bae2c682e2a162598c79b8b1038a973f64f5322d2d8323987a1304ad',
                            '4e542fbc1fcecc144bb2cfcce7972d3753482abad86ce9828c0458341b0aebd7',
                            [(3048, 0, '#ifndef __SWITCH__\n'),
@@ -111,7 +119,8 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                              '    };\n'
                              '    int next = 0;\n'
                              '    for (int i = 0; i < 4; i++)\n'
-                             '        if (!strcmp(cfg.disc, paths[i])) { next = (i + 1) % 4; break; }\n'
+                             '        if (!strcmp(cfg.disc, paths[i])) { next = (i + 1) % 4; '
+                             'break; }\n'
                              '    use_path(paths[next]);\n'
                              '}\n'
                              '#endif\n'),
@@ -123,9 +132,9 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                             (7226,
                              0,
                              '#ifdef __SWITCH__\n'
-                             '        if (!status_ok) text_wrap_c(404, 1, DIM, "Select Disc image to cycle '
-                             'game.cue, game.nrg, game.iso and game folder in sdmc:/switch/quarantinenx/.", '
-                             '72);\n'
+                             '        if (!status_ok) text_wrap_c(404, 1, DIM, "Select Disc image '
+                             'to cycle game.cue, game.nrg, game.iso and game folder in '
+                             'sdmc:/switch/quarantinenx/.", 72);\n'
                              '#else\n'),
                             (7421, 0, '#endif\n'),
                             (8451, 2, ''),
@@ -134,8 +143,8 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                             (8575,
                              0,
                              '    SDL_Event e;\n'
-                             '    if (SDL_PeepEvents(&e, 1, SDL_GETEVENT, SDL_EVENT_QUIT, SDL_EVENT_QUIT) > '
-                             '0) { quit = 1; return 1; }\n'
+                             '    if (SDL_PeepEvents(&e, 1, SDL_GETEVENT, SDL_EVENT_QUIT, '
+                             'SDL_EVENT_QUIT) > 0) { quit = 1; return 1; }\n'
                              '    static Uint64 last_draw;\n'
                              '    Uint64 now = SDL_GetTicks();\n'
                              '    if (now - last_draw < 100 && done != total) return 0;\n'
@@ -143,13 +152,29 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                             (8882, 0, '    return 0;\n'),
                             (14865, 0, '            if (quit) break;\n')]),
  'runtime/rt_sys.c': ('48013a3c8ff0c30351c6246daccb80a2830ce4bfed53954951fca7354dd3a6c8',
-                      '442edeba64dbdfce5ed2fcb99ded0b9e26d23ad949a6dcfe7c5fe270478d85a7',
-                      [(43572,
+                      '87bcaa3b851653eaebae4b7dc72e70a492c75ba5096313a64e0d8c7eb20d4473',
+                      [(510,
+                        0,
+                        '#endif\n'
+                        '#if defined(USE_SDL) && defined(USE_FMV)\n'
+                        'int fmv_intro(SDL_Renderer *renderer, const char *dir);\n'),
+                       (43572,
                         0,
                         '#ifdef __SWITCH__\n'
-                        '    // Keep the controller-accessible launcher available even if saved settings '
-                        'skip it.\n'
+                        '    // Keep the controller-accessible launcher available even if saved '
+                        'settings skip it.\n'
                         '    want_launcher = 1;\n'
+                        '#endif\n'),
+                       (46160,
+                        0,
+                        '#if defined(USE_SDL) && defined(USE_FMV)\n'
+                        '    if (!headless && fmv_intro(ren, data_dir) == 2) { sys_shutdown(); '
+                        'exit(0); }\n'
+                        '    // The guest has not started; movie and install time must not become '
+                        'PIT\n'
+                        '    // backlog or elapse scripted input before the first guest '
+                        'instruction.\n'
+                        '    retrace_t0 = t_start = last_present = last_tick_t = now_s();\n'
                         '#endif\n')])}
 
 def digest(text):
