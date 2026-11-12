@@ -152,30 +152,120 @@ EDITS = {'runtime/disc.h': ('6171ae5cbda5440670751f657c898dea7022a0add38e3c5ea32
                             (8882, 0, '    return 0;\n'),
                             (14865, 0, '            if (quit) break;\n')]),
  'runtime/rt_sys.c': ('48013a3c8ff0c30351c6246daccb80a2830ce4bfed53954951fca7354dd3a6c8',
-                      '87bcaa3b851653eaebae4b7dc72e70a492c75ba5096313a64e0d8c7eb20d4473',
+                      '698dff1fbb3c180ace078718710efd03c525603500f466060698be3e11fa3faf',
                       [(510,
                         0,
                         '#endif\n'
                         '#if defined(USE_SDL) && defined(USE_FMV)\n'
-                        'int fmv_intro(SDL_Renderer *renderer, const char *dir);\n'),
+                        'int fmv_intro(SDL_Renderer *renderer, const char *dir);\n'
+                        'static void fmv_before_still(const char *name, int mode);\n'),
+                       (17630,
+                        0,
+                        '#if defined(USE_SDL) && defined(USE_FMV)\n'
+                        '        fmv_before_still(name, mode);\n'
+                        '#endif\n'),
+                       (32386,
+                        0,
+                        '#ifdef USE_FMV\n'
+                        '// Deliberate Switch presentation order: title, AVI, still montage, guest '
+                        'FLIC.\n'
+                        '// The original QVIDAUD batch plays the AVI before starting the guest.\n'
+                        'static void fmv_before_still(const char *name, int mode) {\n'
+                        '    static int attempted;\n'
+                        '    if (attempted || headless || mode || strcasecmp(base_of(name), '
+                        '"DRAKESS4.IMG")) return;\n'
+                        '    attempted = 1;  // Includes missing and skipped movies; never replay '
+                        'on a later open.\n'
+                        '    double start = now_s();\n'
+                        '    int snd_token = snd_movie_pause();\n'
+                        '    if (snd_token < 0) { fprintf(stderr, "sound: cannot pause for '
+                        'intro\\n"); return; }\n'
+                        '    int cd_token = cd_movie_pause();\n'
+                        '    if (cd_token < 0) {\n'
+                        '        fprintf(stderr, "CD audio: cannot pause for intro\\n");\n'
+                        '        snd_movie_resume(snd_token, now_s() - start);\n'
+                        '        return;\n'
+                        '    }\n'
+                        '    int result = fmv_intro(ren, data_dir);\n'
+                        '    double end = now_s(), elapsed = end - start;\n'
+                        '    cd_movie_resume(cd_token, elapsed);\n'
+                        '    snd_movie_resume(snd_token, elapsed);\n'
+                        '    // Exclude movie time from guest clocks and scripted input; do not '
+                        'build a PIT backlog.\n'
+                        '    t_start += elapsed;\n'
+                        '    retrace_t0 += elapsed;\n'
+                        '    if (flip_end_t) flip_end_t += elapsed;\n'
+                        '    last_tick_t = last_present = end;\n'
+                        '    if (result == 2) { sys_shutdown(); exit(0); }\n'
+                        '}\n'
+                        '#endif\n'),
                        (43572,
                         0,
                         '#ifdef __SWITCH__\n'
                         '    // Keep the controller-accessible launcher available even if saved '
                         'settings skip it.\n'
                         '    want_launcher = 1;\n'
-                        '#endif\n'),
-                       (46160,
+                        '#endif\n')]),
+ 'runtime/rt_cd.c': ('81a3cc21c87ebf33a205afcb4e82c61637b056ae75983c6278e62da87e69c214',
+                     '06c9885b89132539b9bfce6c3f3f6e16458b6a85f2e78b2cabf9d04e5a92d214',
+                     [(1150, 0, 'static int have_audio;\n'),
+                      (1177, 7, ''),
+                      (1188,
+                       0,
+                       'cd_movie_pause(void) {\n'
+                       '#ifdef USE_SDL\n'
+                       '    if (stream_h && !SDL_AudioStreamDevicePaused(stream_h))\n'
+                       '        return SDL_PauseAudioStreamDevice(stream_h) ? 1 : -1;\n'
+                       '#endif\n'
+                       '    return 0;\n'
+                       '}\n'
+                       'void cd_movie_resume(int token, double elapsed) {\n'
+                       '    if (!'),
+                      (1198, 0, ') headless_t0 += elapsed'),
+                      (1200,
+                       0,
+                       '#ifdef USE_SDL\n'
+                       '    if (token == 1 && !SDL_ResumeAudioStreamDevice(stream_h))\n'
+                       '        fprintf(stderr, "CD audio: cannot resume after intro: %s\\n", '
+                       'SDL_GetError());\n'
+                       '#else\n'
+                       '    (void)token;\n'
+                       '#endif\n'
+                       '}\n')]),
+ 'runtime/rt_snd.c': ('5a1c819823478a2e261b04444b73705aea616ab9d19d0d09c2bba920a8ca58e1',
+                      '57c10d360b46d317fe692d8b474a54f47f89a3be19e7442772dcf3989ed9586a',
+                      [(2078,
                         0,
-                        '#if defined(USE_SDL) && defined(USE_FMV)\n'
-                        '    if (!headless && fmv_intro(ren, data_dir) == 2) { sys_shutdown(); '
-                        'exit(0); }\n'
-                        '    // The guest has not started; movie and install time must not become '
-                        'PIT\n'
-                        '    // backlog or elapse scripted input before the first guest '
-                        'instruction.\n'
-                        '    retrace_t0 = t_start = last_present = last_tick_t = now_s();\n'
-                        '#endif\n')])}
+                        '// Return 1 only if this call paused a running logical device, 0 if none '
+                        'or\n'
+                        '// already paused, and -1 on error. Never resume an independently paused '
+                        'device.\n'
+                        'int snd_movie_pause(void) {\n'
+                        '#ifdef USE_SDL\n'
+                        '    if (sfx_stream && !SDL_AudioStreamDevicePaused(sfx_stream))\n'
+                        '        return SDL_PauseAudioStreamDevice(sfx_stream) ? 1 : -1;\n'
+                        '#endif\n'
+                        '    return 0;\n'
+                        '}\n'
+                        'void snd_movie_resume(int token, double elapsed) {\n'
+                        '    if (!have_dev) hl_t0 += elapsed;\n'
+                        '#ifdef USE_SDL\n'
+                        '    if (token == 1 && !SDL_ResumeAudioStreamDevice(sfx_stream))\n'
+                        '        fprintf(stderr, "sound: cannot resume after intro: %s\\n", '
+                        'SDL_GetError());\n'
+                        '#else\n'
+                        '    (void)token;\n'
+                        '#endif\n'
+                        '}\n'
+                        '\n')]),
+ 'runtime/sys.h': ('87cd8d9fba1c1fd94cb97818f354e7034babe507a2a6116d44d06e33c4679e6a',
+                   'c50307cdc36d42fd3a8fb1e23f58655fc0055a473123b383782d4aaedbcfaef4',
+                   [(1124,
+                     0,
+                     'int snd_movie_pause(void);\n'
+                     'void snd_movie_resume(int token, double elapsed);\n'
+                     'int cd_movie_pause(void);\n'
+                     'void cd_movie_resume(int token, double elapsed);\n')])}
 
 def digest(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()

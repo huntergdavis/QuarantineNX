@@ -31,5 +31,7 @@ jobs:
         run: |
           python3 tests/test_prepare_guards.py
           python3 tests/test_fmv_send.py
+          python3 tests/test_fmv_handoff.py
+          python3 tests/test_fmv_audio_pause.py
           python3 tools/test_switch_audio_queue.py "$PWD/work/SDL"
           git diff --exit-code

@@ -2,16 +2,21 @@
 
 Experimental Nintendo Switch homebrew build recipe for the static recompilation
 of Quarantine (1994, DOS). This repository contains only build instructions,
-hash-checked Switch transformations, host tests, an intro player, and an original icon source. It does not
-contain the game, a compiled NRO, generated guest code, extracted media, or the
+hash-checked Switch transformations, host tests, an intro player, and an
+original icon source. It does not contain the game, a compiled NRO, generated
+guest code, extracted media, or the
 upstream project's source history. You need your own matching 572,501-byte
 `SKIPIT.EXE` and game disc image. Locally generated NROs contain translated
 game code; their redistribution rights have not been established.
 
 The owner reported that a local Switch build reached gameplay with working
-controls and that the audio candidate sounded good. The owner reported that the live-action intro played correctly in a local
-Switch test. The final repackaged build itself has not yet been device-tested. This is not a verified release or a guarantee of
-compatibility.
+controls and that the audio candidate sounded good. The owner reported that the
+live-action intro played correctly in a local Switch test. A later startup
+candidate moves the AVI after the title and before the
+game's still-image montage, at the owner's request. This differs from the
+original video-enabled DOS batch, which plays it before the game. The changed
+placement and audio pause behavior have not yet been device-tested. This is not
+a verified release or a guarantee of compatibility.
 
 ## Prepare
 
@@ -70,7 +75,9 @@ extracted `game/` folder. The launcher cycles those paths on the Disc image item
 Configuration, installed image data and saves use the same directory; preserve
 existing files and saves before testing. Place your own `BQUAR1DK.AVI` in the installed game data directory to play the
 intro; absent or unsupported video falls through to the game. The player creates
-numbered diagnostic logs in the app directory. Audio, startup behavior and
+numbered diagnostic logs in the app directory. The startup candidate pauses
+the game audio streams while playing the movie and skips the movie if a stream
+cannot be paused. Audio, startup behavior and
 lifecycle still require broader device validation.
 
 ## Provenance
