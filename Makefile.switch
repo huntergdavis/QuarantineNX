@@ -18,7 +18,14 @@ endif
 CC := $(DEVKITPRO)/devkitA64/bin/aarch64-none-elf-gcc
 ELF2NRO := $(DEVKITPRO)/tools/bin/elf2nro
 NACPTOOL := $(DEVKITPRO)/tools/bin/nacptool
+ENABLE_FMV ?= 1
+ifeq ($(ENABLE_FMV),1)
+BUILD := build-switch-fmv
+APP_NAME := QuarantineNX
+else
 BUILD := build-switch
+APP_NAME := QuarantineNX
+endif
 VERSION := $(shell cat VERSION)
 ARCH := -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 CFLAGS := -O1 -g $(ARCH) -std=c11 -D_DEFAULT_SOURCE -D_GNU_SOURCE -D__SWITCH__ -DUSE_SDL \
@@ -27,6 +34,12 @@ CFLAGS := -O1 -g $(ARCH) -std=c11 -D_DEFAULT_SOURCE -D_GNU_SOURCE -D__SWITCH__ -
 SRC := $(wildcard gen/*.c) $(wildcard runtime/*.c)
 OBJ := $(patsubst %.c,$(BUILD)/%.o,$(SRC))
 SDL_LIBRARY := $(SDL3_SWITCH)/build-switch/libSDL3.a
+ifeq ($(ENABLE_FMV),1)
+# Optional local test: FFmpeg provides the AVI demuxer and TrueMotion1 decoder.
+# Without it, the game starts normally and omits the external intro movie.
+CFLAGS += -DUSE_FMV -I$(DEVKITPRO)/portlibs/switch/include
+FMV_LIBS := -lavformat -lbz2 -lavcodec -ldav1d -lz -lswscale -lswresample -lavutil
+endif
 
 .PHONY: all clean
 all: $(BUILD)/QuarantineNX.nro
@@ -38,12 +51,12 @@ $(BUILD)/%.o: %.c $(wildcard gen/*.h) runtime/rt.h runtime/sys.h runtime/disc.h 
 $(BUILD)/QuarantineNX.elf: $(OBJ) $(SDL_LIBRARY)
 	$(CC) -specs=$(DEVKITPRO)/libnx/switch.specs $(ARCH) $(OBJ) \
 	  -L$(SDL3_SWITCH)/build-switch -L$(DEVKITPRO)/portlibs/switch/lib -L$(DEVKITPRO)/libnx/lib \
-	  -Wl,--start-group -lSDL3 -lEGL -lGLESv2 -lglapi -ldrm_nouveau -Wl,--end-group \
+	  -Wl,--start-group -lSDL3 $(FMV_LIBS) -lEGL -lGLESv2 -lglapi -ldrm_nouveau -Wl,--end-group \
 	  -lstdc++ -lnx -lm -o $@
 
-$(BUILD)/QuarantineNX.nacp: VERSION
+$(BUILD)/QuarantineNX.nacp: VERSION Makefile.switch
 	@mkdir -p $(dir $@)
-	$(NACPTOOL) --create "QuarantineNX" "QuarantineNX contributors" "$(VERSION)" $@
+	$(NACPTOOL) --create "$(APP_NAME)" "QuarantineNX contributors" "$(VERSION)" $@
 
 $(BUILD)/QuarantineNX.nro: $(BUILD)/QuarantineNX.elf $(BUILD)/QuarantineNX.nacp assets/icon.jpg
 	$(ELF2NRO) $< $@ --nacp=$(BUILD)/QuarantineNX.nacp --icon=assets/icon.jpg

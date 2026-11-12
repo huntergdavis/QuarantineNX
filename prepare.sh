@@ -15,6 +15,7 @@ command -v magick >/dev/null || { printf 'ImageMagick 7 (magick) is required to 
 git clone --no-checkout https://github.com/huntergdavis/quarantine-recomp.git "$work/upstream"
 git -C "$work/upstream" checkout --detach 4b785beba28ada9105ac42d7f58431cb9b851fee
 python3 "$root/tools/apply_switch.py" "$work/upstream"
+cp "$root/overlay/rt_fmv.c" "$work/upstream/runtime/rt_fmv.c"
 cp "$root/Makefile.switch" "$work/upstream/Makefile.switch"
 mkdir -p "$work/upstream/assets"
 magick -background '#12151c' "$root/assets/icon.svg" -colorspace sRGB -sampling-factor 4:2:0 -quality 90 "$work/upstream/assets/icon.jpg"

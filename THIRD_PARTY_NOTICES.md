@@ -33,6 +33,13 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 
 
+The default intro player uses [FFmpeg](https://ffmpeg.org/legal.html) libraries
+libavformat, libavcodec, libavutil, libswscale and libswresample. FFmpeg is not
+vendored in this recipe. The pinned devkitPro image provides `switch-ffmpeg`
+version 7.1-5 with package license metadata `GPL`; review its configuration,
+source and applicable license obligations before distributing any linked binary.
+This repository distributes no FFmpeg binary or game media.
+
 The toolchain and libraries supplied by devkitPro, libnx, Mesa and other
 build-time or linked dependencies have their own notices and licenses. Review
 the relevant distribution requirements before distributing compiled artifacts.

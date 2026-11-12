@@ -2,15 +2,15 @@
 
 Experimental Nintendo Switch homebrew build recipe for the static recompilation
 of Quarantine (1994, DOS). This repository contains only build instructions,
-hash-checked Switch transformations, a host test, and an original icon source. It does not
+hash-checked Switch transformations, host tests, an intro player, and an original icon source. It does not
 contain the game, a compiled NRO, generated guest code, extracted media, or the
 upstream project's source history. You need your own matching 572,501-byte
 `SKIPIT.EXE` and game disc image. Locally generated NROs contain translated
 game code; their redistribution rights have not been established.
 
 The owner reported that a local Switch build reached gameplay with working
-controls and that the audio candidate sounded good. A reported missing intro
-remains under investigation. This is not a verified release or a guarantee of
+controls and that the audio candidate sounded good. The owner reported that the live-action intro played correctly in a local
+Switch test. The final repackaged build itself has not yet been device-tested. This is not a verified release or a guarantee of
 compatibility.
 
 ## Prepare
@@ -46,16 +46,20 @@ virtual environment and run `make gen PYTHON=.venv/bin/python`. Then from the
 recipe root:
 
 ```sh
-mkdir -p work/upstream/build-switch/tmp
-docker run --rm -u "$(id -u):$(id -g)" -e TMPDIR=/src/build-switch/tmp \
+mkdir -p work/upstream/build-switch-fmv/tmp
+docker run --rm -u "$(id -u):$(id -g)" -e TMPDIR=/src/build-switch-fmv/tmp \
   -v "$PWD/work/upstream:/src" -v "$PWD/work/SDL:/sdl" -w /src \
   devkitpro/devkita64@sha256:1fc388c3a0d34bd2045a6dadcb1020e069d5f876a187fd705de14b4440c00282 \
   make -f Makefile.switch -j4 DEVKITPRO=/opt/devkitpro SDL3_SWITCH=/sdl
 ```
 
-The local NRO is `work/upstream/build-switch/QuarantineNX.nro`. A source-generated
+The local NRO is `work/upstream/build-switch-fmv/QuarantineNX.nro`. A source-generated
 guest has 54 unimplemented call lines for the tested executable, including
 repeated addresses; reaching one is fatal and their reachability is unknown.
+
+The default build links the image-provided FFmpeg package (metadata: GPL); see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before distributing binaries.
+Pass `ENABLE_FMV=0` to build without the intro player and FFmpeg.
 
 ## Device test
 
@@ -64,8 +68,10 @@ homebrew menu. Put your own disc image at `sdmc:/switch/quarantinenx/game.nrg`,
 `game.cue` (with its referenced BIN files), `game.iso` (no CD music), or an
 extracted `game/` folder. The launcher cycles those paths on the Disc image item.
 Configuration, installed image data and saves use the same directory; preserve
-existing files and saves before testing. Audio, startup behavior and lifecycle
-still require broader device validation.
+existing files and saves before testing. Place your own `BQUAR1DK.AVI` in the installed game data directory to play the
+intro; absent or unsupported video falls through to the game. The player creates
+numbered diagnostic logs in the app directory. Audio, startup behavior and
+lifecycle still require broader device validation.
 
 ## Provenance
 
