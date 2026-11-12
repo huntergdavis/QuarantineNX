@@ -12,6 +12,7 @@ upstream = root / 'work/upstream'
 files = [
     'runtime/disc.h', 'runtime/rt_config.c', 'runtime/rt_core.c',
     'runtime/rt_disc.c', 'runtime/rt_launcher.c', 'runtime/rt_sys.c',
+    'runtime/rt_cd.c', 'runtime/rt_snd.c', 'runtime/sys.h',
 ]
 
 def digest(path):
